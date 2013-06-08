@@ -12,7 +12,8 @@
 #include <Ole2.h>
 #include "NuiApi.h"
 
-
+#define _USE_MATH_DEFINES
+#include <math.h>
 // Module specification
 // <rtc-template block="module_spec">
 static const char* rtckinect_spec[] =
@@ -214,13 +215,13 @@ RTC::ReturnCode_t RTCKinect::onActivated(RTC::UniqueId ec_id)
 		return RTC::RTC_ERROR;
     }
 
+	
 	this->m_image.width = m_camera_width;
 	this->m_image.height = m_camera_height;
 	this->m_image.pixels.length(m_camera_width*m_camera_height*3);
 
-	this->m_depth.width = m_depth_width;
-	this->m_depth.height = m_depth_height;
-	this->m_depth.pixels.length(m_depth_width*m_depth_height*3);
+	this->m_depth.bits.length(m_depth_width*m_depth_height);
+	coil::sleep(3);
 
 	return RTC::RTC_OK;
 }
@@ -316,9 +317,21 @@ HRESULT RTCKinect::WriteDepthImage(void)
     pTexture->LockRect( 0, &LockedRect, NULL, 0 );
     if( LockedRect.Pitch != 0 )
     {
-        BYTE * pBuffer = (BYTE*) LockedRect.pBits;
+        USHORT * pBuffer = (USHORT*) LockedRect.pBits;
+
+		m_depth.timestamp = pImageFrame->liTimeStamp.QuadPart;
+		m_depth.width = m_depth_width;
+		m_depth.height = m_depth_height;
+		m_depth.verticalFieldOfView = 57.0  / 180.0 * M_PI;
+		m_depth.horizontalFieldOfView = 43.0 / 180.0 * M_PI;
+		//m_depth.bits.length(m_depth_height* m_depth_width);
 		for(int h = 0;h < m_depth_height;h++) {
 			for(int w = 0;w < m_depth_width;w++) {
+				int index = h*m_depth_width + w;
+				m_depth.bits[index] = pBuffer[index];
+
+
+				/**
 				USHORT* pixel = (USHORT*)(pBuffer + (h * m_depth_width * sizeof(USHORT)) + w * sizeof(USHORT));
 
 				USHORT RealDepth = (*pixel & 0xfff8) >> 3;
@@ -331,9 +344,10 @@ HRESULT RTCKinect::WriteDepthImage(void)
 				unsigned char r, g, b;
 				r=g=b = depth/2;
 				int offset = h*m_depth_width*3+w*3;
-				m_depth.pixels[offset + 0] = b;
-				m_depth.pixels[offset + 1] = g;
-				m_depth.pixels[offset + 2] = r;
+				//m_depth.pixels[offset + 0] = b;
+				//m_depth.pixels[offset + 1] = g;
+				//m_depth.pixels[offset + 2] = r;
+				*/
 			}
 			m_depthOut.write();
 		}

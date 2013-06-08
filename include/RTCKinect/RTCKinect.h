@@ -293,12 +293,12 @@ class RTCKinect
    * - Type: CameraImage
    */
   OutPort<RTC::CameraImage> m_imageOut;
-  RTC::CameraImage m_depth;
+  rtckinect::DepthImage m_depth;
   /*!
    * Depth Image
    * - Type: CameraImage
    */
-  OutPort<RTC::CameraImage> m_depthOut;
+  OutPort<rtckinect::DepthImage> m_depthOut;
   RTC::TimedLong m_currentElevation;
   /*!
    */

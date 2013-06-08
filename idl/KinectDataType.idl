@@ -68,7 +68,16 @@ module rtckinect {
       NuiSkeletonData SkeletonData[ 6 ];
    };
 
-   
+   struct DepthImage {
+      long long timestamp;
+      long width;
+      long height;
+      sequence<unsigned short> bits;
+      double horizontalFieldOfView;
+      double verticalFieldOfView;
+   };
+
+
    struct SoundSourceLocation {
      double angle;
      double confidence;
