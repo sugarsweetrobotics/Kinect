@@ -385,7 +385,7 @@ HRESULT RTCKinect::WriteElevation()
 	return S_OK;
 }
 
-void operator<<=(rtckinect::Vector4& dst, ::Vector4& src) {
+void operator<<=(KINECT::Vector4& dst, ::Vector4& src) {
 	/*
 	dst.v[0] = src.v[0];
 	dst.v[1] = src.v[1];
@@ -410,15 +410,15 @@ struct _NUI_SKELETON_DATA {
         eSkeletonPositionTrackingState[NUI_SKELETON_POSITION_COUNT];
     DWORD dwQualityFlags;
 */
-void operator<<=(rtckinect::NuiSkeletonData& dst, ::NUI_SKELETON_DATA& src) {
+void operator<<=(KINECT::NuiSkeletonData& dst, ::NUI_SKELETON_DATA& src) {
 	dst.trackingID = src.dwTrackingID;
-	dst.trackingState = (rtckinect::NUI_SKELETON_TRACKING_STATE)src.eTrackingState;
+	dst.trackingState = (KINECT::NUI_SKELETON_TRACKING_STATE)src.eTrackingState;
 	dst.enrollmentIndex = src.dwEnrollmentIndex;
 	dst.userIndex = src.dwUserIndex;
 	dst.position <<= src.Position;
 	for(int i = 0;i < 20;i++) {
 		dst.skeletonPositions[i] <<= src.SkeletonPositions[i];
-		dst.eSkeletonPositionTrackingState[i]  = (rtckinect::NUI_SKELETON_POSITION_TRACKING_STATE)src.eSkeletonPositionTrackingState[i];
+		dst.eSkeletonPositionTrackingState[i]  = (KINECT::NUI_SKELETON_POSITION_TRACKING_STATE)src.eSkeletonPositionTrackingState[i];
 	}
 	dst.qualityFlags = src.dwQualityFlags;
 }

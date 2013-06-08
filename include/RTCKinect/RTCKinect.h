@@ -293,20 +293,20 @@ class RTCKinect
    * - Type: CameraImage
    */
   OutPort<RTC::CameraImage> m_imageOut;
-  rtckinect::DepthImage m_depth;
+  KINECT::DepthImage m_depth;
   /*!
    * Depth Image
    * - Type: CameraImage
    */
-  OutPort<rtckinect::DepthImage> m_depthOut;
+  OutPort<KINECT::DepthImage> m_depthOut;
   RTC::TimedLong m_currentElevation;
   /*!
    */
   OutPort<RTC::TimedLong> m_currentElevationOut;
-  rtckinect::NuiSkeletonFrame m_skeleton;
+  KINECT::NuiSkeletonFrame m_skeleton;
   /*!
    */
-  OutPort<rtckinect::NuiSkeletonFrame> m_skeletonOut;
+  OutPort<KINECT::NuiSkeletonFrame> m_skeletonOut;
   
   // </rtc-template>
 
