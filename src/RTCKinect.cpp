@@ -38,6 +38,7 @@ static const char* rtckinect_spec[] =
     "conf.default.depth_width", "320",
     "conf.default.depth_height", "240",
     "conf.default.player_index", "0",
+	"conf.default.kinect_index", "0",
     // Widget
     "conf.__widget__.debug", "text",
     "conf.__widget__.enable_camera", "text",
@@ -47,6 +48,7 @@ static const char* rtckinect_spec[] =
     "conf.__widget__.depth_width", "text",
     "conf.__widget__.depth_height", "text",
     "conf.__widget__.player_index", "text",
+	"conf.__widget__.kinect_index", "text",
     // Constraints
     ""
   };
@@ -109,6 +111,7 @@ RTC::ReturnCode_t RTCKinect::onInitialize()
   bindParameter("depth_width", m_depth_width, "320");
   bindParameter("depth_height", m_depth_height, "240");
   bindParameter("player_index", m_player_index, "0");
+  bindParameter("kinect_index", m_kinect_index, "0");
   // </rtc-template>
   
   return RTC::RTC_OK;
@@ -138,11 +141,12 @@ RTC::ReturnCode_t RTCKinect::onShutdown(RTC::UniqueId ec_id)
 
 RTC::ReturnCode_t RTCKinect::onActivated(RTC::UniqueId ec_id)
 {
-	std::vector<INuiSensor *> vSensors;
 
-    int iSensorCount = 0;
-    HRESULT hr = NuiGetSensorCount(&iSensorCount);
-
+	HRESULT hr = NuiCreateSensorByIndex(m_kinect_index, &m_pNuiSensor);
+	if ( FAILED(hr) ) {
+		std::cerr << " - Can not find Kinect (" << m_kinect_index << ")" << std::endl;
+		return RTC::RTC_ERROR;
+	}
 
     /**
 	 * The configured values should be reflected to the initialization process.
@@ -166,30 +170,29 @@ RTC::ReturnCode_t RTCKinect::onActivated(RTC::UniqueId ec_id)
 		}
 	}
 
-
-	/*HRESULT */hr = NuiInitialize(dwFlag); 
+	hr = m_pNuiSensor->NuiInitialize(dwFlag); 
     if( FAILED( hr ) )
     {
-		std::cout << "NUI Initialize Failed." << std::endl;
+		std::cout << " - NUI Initialize Failed." << std::endl;
 		return RTC::RTC_ERROR;
     }
 
 	if(m_depth_width == 640 && m_depth_height == 480 && m_enable_depth && m_player_index) {
-		std::cout << "If PlayerIndex and Depth Map is ON, resolution should be 320X240" << std::endl;
+		std::cout << " - If PlayerIndex and Depth Map is ON, resolution should be 320X240" << std::endl;
 		return RTC::RTC_ERROR;
 	}
 	NUI_IMAGE_RESOLUTION eResolution;
 	if(m_camera_width == 640 && m_camera_height == 480) {
 		eResolution = NUI_IMAGE_RESOLUTION_640x480;
 	} else {
-		std::cout << "Invalid Image Resolution" << std::endl;
+		std::cout << " - Invalid Image Resolution" << std::endl;
 		return RTC::RTC_ERROR;
 	}
 	if(m_enable_camera) {
-		hr = NuiImageStreamOpen(::NUI_IMAGE_TYPE_COLOR, eResolution, 0, 2, NULL, &m_pVideoStreamHandle );
+		hr = m_pNuiSensor->NuiImageStreamOpen(::NUI_IMAGE_TYPE_COLOR, eResolution, 0, 2, NULL, &m_pVideoStreamHandle );
 		if( FAILED( hr ) )
 		{
-			std::cout << "NUI Image Stream Open Failed." << std::endl;
+			std::cout << " - NUI Image Stream Open Failed." << std::endl;
 			return RTC::RTC_ERROR;
 		}
 	}
@@ -199,19 +202,19 @@ RTC::ReturnCode_t RTCKinect::onActivated(RTC::UniqueId ec_id)
 	} else if(m_depth_width == 320 && m_depth_height == 240) {
 		eResolution = NUI_IMAGE_RESOLUTION_320x240;
 	} else {
-		std::cout << "Invalid Image Resolution" << std::endl;
+		std::cout << " - Invalid Image Resolution" << std::endl;
 		return RTC::RTC_ERROR;
 	}
 	if(m_enable_depth) {
 		if(m_player_index) {
-			hr = NuiImageStreamOpen(::NUI_IMAGE_TYPE_DEPTH_AND_PLAYER_INDEX, eResolution, 0, 2, NULL, &m_pDepthStreamHandle );
+			hr = m_pNuiSensor->NuiImageStreamOpen(::NUI_IMAGE_TYPE_DEPTH_AND_PLAYER_INDEX, eResolution, 0, 2, NULL, &m_pDepthStreamHandle );
 		} else {
-			hr = NuiImageStreamOpen(::NUI_IMAGE_TYPE_DEPTH, eResolution, 0, 2, NULL, &m_pDepthStreamHandle );
+			hr = m_pNuiSensor->NuiImageStreamOpen(::NUI_IMAGE_TYPE_DEPTH, eResolution, 0, 2, NULL, &m_pDepthStreamHandle );
 		}
 	}
     if( FAILED( hr ) )
     {
-		std::cout << "NUI Image Stream Open Failed." << std::endl;
+		std::cout << " - NUI Image Stream Open Failed." << std::endl;
 		return RTC::RTC_ERROR;
     }
 
@@ -229,7 +232,7 @@ RTC::ReturnCode_t RTCKinect::onActivated(RTC::UniqueId ec_id)
 
 RTC::ReturnCode_t RTCKinect::onDeactivated(RTC::UniqueId ec_id)
 {
-	NuiShutdown( );
+	m_pNuiSensor->NuiShutdown( );
 
 	return RTC::RTC_OK;
 }
@@ -252,8 +255,8 @@ RTC::ReturnCode_t RTCKinect::onDeactivated(RTC::UniqueId ec_id)
 HRESULT RTCKinect::WriteColorImage(void)
 {
 	static const long TIMEOUT_IN_MILLI = 100;
-	const NUI_IMAGE_FRAME * pImageFrame = NULL;
-    HRESULT hr = NuiImageStreamGetNextFrame(m_pVideoStreamHandle, TIMEOUT_IN_MILLI, &pImageFrame );
+	NUI_IMAGE_FRAME ImageFrame;
+    HRESULT hr = m_pNuiSensor->NuiImageStreamGetNextFrame(m_pVideoStreamHandle, TIMEOUT_IN_MILLI, &ImageFrame );
     if( FAILED( hr ) ) {
 		std::cout << "NuiImageStreamGetNextFrame failed." << std::endl;
 		return hr;
@@ -261,7 +264,7 @@ HRESULT RTCKinect::WriteColorImage(void)
 
     //NuiImageBuffer * pTexture = pImageFrame->pFrameTexture;
     //KINECT_LOCKED_RECT LockedRect;
-    INuiFrameTexture * pTexture = pImageFrame->pFrameTexture;
+    INuiFrameTexture * pTexture = ImageFrame.pFrameTexture;
     NUI_LOCKED_RECT LockedRect;
     pTexture->LockRect( 0, &LockedRect, NULL, 0 );
     if( LockedRect.Pitch != 0 )
@@ -285,8 +288,9 @@ HRESULT RTCKinect::WriteColorImage(void)
     else {
 		std::cout << "Buffer length of received texture is bogus\r\n" << std::endl;
     }
+	pTexture->UnlockRect(0);
 
-    NuiImageStreamReleaseFrame( m_pVideoStreamHandle, pImageFrame );
+    m_pNuiSensor->NuiImageStreamReleaseFrame( m_pVideoStreamHandle, &ImageFrame );
 
 	return S_OK;
 }
@@ -303,8 +307,16 @@ HRESULT RTCKinect::WriteColorImage(void)
 HRESULT RTCKinect::WriteDepthImage(void)
 {
 	static const long TIMEOUT_IN_MILLI = 100;
+	/*
 	const NUI_IMAGE_FRAME * pImageFrame = NULL;
-    HRESULT hr = NuiImageStreamGetNextFrame(m_pDepthStreamHandle, TIMEOUT_IN_MILLI, &pImageFrame );
+    
+	*/
+	NUI_IMAGE_FRAME ImageFrame;
+	BOOL bNearMode = false;
+	INuiFrameTexture* pTexture;
+	HRESULT hr = m_pNuiSensor->NuiImageStreamGetNextFrame(m_pDepthStreamHandle, TIMEOUT_IN_MILLI, &ImageFrame );
+	//pTexture = ImageFrame.pFrameTexture;
+    hr = m_pNuiSensor->NuiImageFrameGetDepthImagePixelFrameTexture(m_pDepthStreamHandle, &ImageFrame, &bNearMode, &pTexture);
     if( FAILED( hr ) ) {
 		std::cout << "NuiImageStreamGetNextFrame failed." << std::endl;
 		return hr;
@@ -312,25 +324,26 @@ HRESULT RTCKinect::WriteDepthImage(void)
 
     //NuiImageBuffer * pTexture = pImageFrame->pFrameTexture;
     //KINECT_LOCKED_RECT LockedRect;
-    INuiFrameTexture * pTexture = pImageFrame->pFrameTexture;
+    //INuiFrameTexture * pTexture = ImageFrame.pFrameTexture;
     NUI_LOCKED_RECT LockedRect;
     pTexture->LockRect( 0, &LockedRect, NULL, 0 );
     if( LockedRect.Pitch != 0 )
     {
-        USHORT * pBuffer = (USHORT*) LockedRect.pBits;
+        NUI_DEPTH_IMAGE_PIXEL * pBuffer = reinterpret_cast<NUI_DEPTH_IMAGE_PIXEL*>(LockedRect.pBits);
 
-		m_depth.timestamp = pImageFrame->liTimeStamp.QuadPart;
+		m_depth.timestamp = ImageFrame.liTimeStamp.QuadPart;
 		m_depth.width = m_depth_width;
 		m_depth.height = m_depth_height;
-		m_depth.verticalFieldOfView = 57.0  / 180.0 * M_PI;
-		m_depth.horizontalFieldOfView = 43.0 / 180.0 * M_PI;
+		m_depth.verticalFieldOfView = 45.6  / 180.0 * M_PI;
+		m_depth.horizontalFieldOfView = 58.5 * M_PI / 180.0;
 		//m_depth.bits.length(m_depth_height* m_depth_width);
 		for(int h = 0;h < m_depth_height;h++) {
 			for(int w = 0;w < m_depth_width;w++) {
+				
 				int index = h*m_depth_width + w;
-				m_depth.bits[index] = pBuffer[index];
+				m_depth.bits[index] = (pBuffer[index].depth);
 
-
+				//std::cout << pBuffer[index].depth << std::endl;
 				/**
 				USHORT* pixel = (USHORT*)(pBuffer + (h * m_depth_width * sizeof(USHORT)) + w * sizeof(USHORT));
 
@@ -356,8 +369,8 @@ HRESULT RTCKinect::WriteDepthImage(void)
     else {
 		std::cout << "Buffer length of received texture is bogus\r\n" << std::endl;
     }
-
-    NuiImageStreamReleaseFrame( m_pDepthStreamHandle, pImageFrame );
+	pTexture->UnlockRect(0);
+    m_pNuiSensor->NuiImageStreamReleaseFrame( m_pDepthStreamHandle, &ImageFrame );
 
 	return S_OK;
 }
@@ -371,12 +384,12 @@ HRESULT RTCKinect::WriteElevation()
 	HRESULT hr;
 	LONG angle;
 	if(m_targetElevationIn.isNew()) {
-		hr = NuiCameraElevationSetAngle(m_targetElevation.data);
+		hr = m_pNuiSensor->NuiCameraElevationSetAngle(m_targetElevation.data);
 		if( FAILED(hr) ) {
 			return hr;
 		}
 	}
-	hr = NuiCameraElevationGetAngle(&angle);
+	hr = m_pNuiSensor->NuiCameraElevationGetAngle(&angle);
 	if( FAILED(hr) ) {
 		return hr;
 	}
@@ -432,7 +445,7 @@ HRESULT RTCKinect::WriteSkeleton()
 	static const long TIMEOUT_IN_MILI = 100;
 
 	NUI_SKELETON_FRAME skeletonFrame;
-	HRESULT ret = NuiSkeletonGetNextFrame(TIMEOUT_IN_MILI, & skeletonFrame);
+	HRESULT ret = m_pNuiSensor->NuiSkeletonGetNextFrame(TIMEOUT_IN_MILI, & skeletonFrame);
 	if(FAILED(ret)) {
 		return ret;
 	}

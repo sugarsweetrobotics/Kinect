@@ -32,6 +32,7 @@
 
 using namespace RTC;
 
+struct INuiSensor;
 /*!
  * @class RTCKinect
  * @brief RTC Kinect 4 Windows
@@ -272,7 +273,12 @@ class RTCKinect
    * - DefaultValue: 0
    */
   int m_player_index;
-
+  /*!
+   * 
+   * - Name:  kinect_index
+   * - DefaultValue: 0
+   */
+  int m_kinect_index;
   // </rtc-template>
 
   // DataInPort declaration
@@ -342,6 +348,7 @@ class RTCKinect
 	HRESULT WriteElevation();
 	HRESULT WriteSkeleton();
 
+	INuiSensor *    m_pNuiSensor;
 
 };
 
