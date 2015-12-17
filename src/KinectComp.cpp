@@ -1,6 +1,6 @@
 // -*- C++ -*-
 /*!
- * @file RTCKinectComp.cpp
+ * @file KinectComp.cpp
  * @brief Standalone component
  * @date $Date$
  *
@@ -11,16 +11,16 @@
 #include <iostream>
 #include <string>
 #include <stdlib.h>
-#include "RTCKinect.h"
+#include "Kinect.h"
 
 
 void MyModuleInit(RTC::Manager* manager)
 {
-  RTCKinectInit(manager);
+  KinectInit(manager);
   RTC::RtcBase* comp;
 
   // Create a component
-  comp = manager->createComponent("RTCKinect");
+  comp = manager->createComponent("Kinect");
 
   if (comp==NULL)
   {

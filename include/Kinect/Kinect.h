@@ -1,14 +1,14 @@
 // -*- C++ -*-
 /*!
- * @file  RTCKinect.h
+ * @file  Kinect.h
  * @brief RTC Kinect 4 Windows
  * @date  $Date$
  *
  * $Id$
  */
 
-#ifndef RTCKINECT_H
-#define RTCKINECT_H
+#ifndef KINECT_H
+#define KINECT_H
 
 #include <rtm/Manager.h>
 #include <rtm/DataFlowComponentBase.h>
@@ -34,11 +34,11 @@ using namespace RTC;
 
 struct INuiSensor;
 /*!
- * @class RTCKinect
+ * @class Kinect
  * @brief RTC Kinect 4 Windows
  *
  */
-class RTCKinect
+class Kinect
   : public RTC::DataFlowComponentBase
 {
  public:
@@ -46,12 +46,12 @@ class RTCKinect
    * @brief constructor
    * @param manager Maneger Object
    */
-  RTCKinect(RTC::Manager* manager);
+  Kinect(RTC::Manager* manager);
 
   /*!
    * @brief destructor
    */
-  ~RTCKinect();
+  ~Kinect();
 
   // <rtc-template block="public_attribute">
   
@@ -355,7 +355,7 @@ class RTCKinect
 
 extern "C"
 {
-  DLL_EXPORT void RTCKinectInit(RTC::Manager* manager);
+  DLL_EXPORT void KinectInit(RTC::Manager* manager);
 };
 
-#endif // RTCKINECT_H
+#endif // KINECT_H

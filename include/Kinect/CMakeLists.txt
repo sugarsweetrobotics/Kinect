@@ -1,4 +1,4 @@
-set(hdrs RTCKinect.h
+set(hdrs Kinect.h
     PARENT_SCOPE
     )
 

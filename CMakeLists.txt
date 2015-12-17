@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
-project(RTCKinect)
+project(Kinect)
 string(TOLOWER ${PROJECT_NAME} PROJECT_NAME_LOWER)
 include("${PROJECT_SOURCE_DIR}/cmake/utils.cmake")
-set(PROJECT_VERSION 1.0.0 CACHE STRING "RTCKinect version")
+set(PROJECT_VERSION 1.0.0 CACHE STRING "Kinect version")
 DISSECT_VERSION()
 set(PROJECT_DESCRIPTION "RTC Kinect 4 Windows")
-set(PROJECT_VENDOR "ysuga.net")
+set(PROJECT_VENDOR "sugarasweetrobotics.com")
 set(PROJECT_AUTHOR "ysuga.net")
 set(PROJECT_AUTHOR_SHORT "ysuga.net")
 

@@ -1,13 +1,13 @@
 // -*- C++ -*-
 /*!
- * @file  RTCKinect.cpp
+ * @file  Kinect.cpp
  * @brief RTC Kinect 4 Windows
  * @date $Date$
  *
  * $Id$
  */
 
-#include "RTCKinect.h"
+#include "Kinect.h"
 #include <windows.h>
 #include <Ole2.h>
 #include "NuiApi.h"
@@ -16,14 +16,14 @@
 #include <math.h>
 // Module specification
 // <rtc-template block="module_spec">
-static const char* rtckinect_spec[] =
+static const char* kinect_spec[] =
   {
-    "implementation_id", "RTCKinect",
-    "type_name",         "RTCKinect",
+    "implementation_id", "Kinect",
+    "type_name",         "Kinect",
     "description",       "RTC Kinect 4 Windows",
     "version",           "1.0.0",
     "vendor",            "ysuga.net",
-    "category",          "Experimental",
+    "category",          "HumanInterface",
     "activity_type",     "PERIODIC",
     "kind",              "DataFlowComponent",
     "max_instance",      "1",
@@ -58,7 +58,7 @@ static const char* rtckinect_spec[] =
  * @brief constructor
  * @param manager Maneger Object
  */
-RTCKinect::RTCKinect(RTC::Manager* manager)
+Kinect::Kinect(RTC::Manager* manager)
     // <rtc-template block="initializer">
   : RTC::DataFlowComponentBase(manager),
     m_targetElevationIn("targetElevation", m_targetElevation),
@@ -74,13 +74,13 @@ RTCKinect::RTCKinect(RTC::Manager* manager)
 /*!
  * @brief destructor
  */
-RTCKinect::~RTCKinect()
+Kinect::~Kinect()
 {
 }
 
 
 
-RTC::ReturnCode_t RTCKinect::onInitialize()
+RTC::ReturnCode_t Kinect::onInitialize()
 {
   // Registration: InPort/OutPort/Service
   // <rtc-template block="registration">
@@ -118,28 +118,28 @@ RTC::ReturnCode_t RTCKinect::onInitialize()
 }
 
 /*
-RTC::ReturnCode_t RTCKinect::onFinalize()
+RTC::ReturnCode_t Kinect::onFinalize()
 {
   return RTC::RTC_OK;
 }
 */
 
 /*
-RTC::ReturnCode_t RTCKinect::onStartup(RTC::UniqueId ec_id)
+RTC::ReturnCode_t Kinect::onStartup(RTC::UniqueId ec_id)
 {
   return RTC::RTC_OK;
 }
 */
 
 /*
-RTC::ReturnCode_t RTCKinect::onShutdown(RTC::UniqueId ec_id)
+RTC::ReturnCode_t Kinect::onShutdown(RTC::UniqueId ec_id)
 {
   return RTC::RTC_OK;
 }
 */
 
 
-RTC::ReturnCode_t RTCKinect::onActivated(RTC::UniqueId ec_id)
+RTC::ReturnCode_t Kinect::onActivated(RTC::UniqueId ec_id)
 {
 
 	HRESULT hr = NuiCreateSensorByIndex(m_kinect_index, &m_pNuiSensor);
@@ -230,7 +230,7 @@ RTC::ReturnCode_t RTCKinect::onActivated(RTC::UniqueId ec_id)
 }
 
 
-RTC::ReturnCode_t RTCKinect::onDeactivated(RTC::UniqueId ec_id)
+RTC::ReturnCode_t Kinect::onDeactivated(RTC::UniqueId ec_id)
 {
 	m_pNuiSensor->NuiShutdown( );
 
@@ -252,7 +252,7 @@ RTC::ReturnCode_t RTCKinect::onDeactivated(RTC::UniqueId ec_id)
  *
  */
 
-HRESULT RTCKinect::WriteColorImage(void)
+HRESULT Kinect::WriteColorImage(void)
 {
 	static const long TIMEOUT_IN_MILLI = 100;
 	NUI_IMAGE_FRAME ImageFrame;
@@ -304,7 +304,7 @@ HRESULT RTCKinect::WriteColorImage(void)
  * but also the tracking user id!
  *
  */
-HRESULT RTCKinect::WriteDepthImage(void)
+HRESULT Kinect::WriteDepthImage(void)
 {
 	static const long TIMEOUT_IN_MILLI = 100;
 	/*
@@ -379,7 +379,7 @@ HRESULT RTCKinect::WriteDepthImage(void)
 /**
  * Controlling Elevation Motor
  */
-HRESULT RTCKinect::WriteElevation()
+HRESULT Kinect::WriteElevation()
 {
 	HRESULT hr;
 	LONG angle;
@@ -440,7 +440,7 @@ void operator<<=(KINECT::NuiSkeletonData& dst, ::NUI_SKELETON_DATA& src) {
 /**
  *
  */
-HRESULT RTCKinect::WriteSkeleton()
+HRESULT Kinect::WriteSkeleton()
 {
 	static const long TIMEOUT_IN_MILI = 100;
 
@@ -466,7 +466,7 @@ HRESULT RTCKinect::WriteSkeleton()
 	return S_OK;
 }
 
-RTC::ReturnCode_t RTCKinect::onExecute(RTC::UniqueId ec_id)
+RTC::ReturnCode_t Kinect::onExecute(RTC::UniqueId ec_id)
 {
 	if(m_enable_camera) {
 		if( FAILED(WriteColorImage())) {
@@ -493,34 +493,34 @@ RTC::ReturnCode_t RTCKinect::onExecute(RTC::UniqueId ec_id)
 }
 
 /*
-RTC::ReturnCode_t RTCKinect::onAborting(RTC::UniqueId ec_id)
+RTC::ReturnCode_t Kinect::onAborting(RTC::UniqueId ec_id)
 {
   return RTC::RTC_OK;
 }
 */
 
 /*
-RTC::ReturnCode_t RTCKinect::onError(RTC::UniqueId ec_id)
+RTC::ReturnCode_t Kinect::onError(RTC::UniqueId ec_id)
 {
   return RTC::RTC_OK;
 }
 */
 
 
-RTC::ReturnCode_t RTCKinect::onReset(RTC::UniqueId ec_id)
+RTC::ReturnCode_t Kinect::onReset(RTC::UniqueId ec_id)
 {
   return RTC::RTC_OK;
 }
 
 /*
-RTC::ReturnCode_t RTCKinect::onStateUpdate(RTC::UniqueId ec_id)
+RTC::ReturnCode_t Kinect::onStateUpdate(RTC::UniqueId ec_id)
 {
   return RTC::RTC_OK;
 }
 */
 
 /*
-RTC::ReturnCode_t RTCKinect::onRateChanged(RTC::UniqueId ec_id)
+RTC::ReturnCode_t Kinect::onRateChanged(RTC::UniqueId ec_id)
 {
   return RTC::RTC_OK;
 }
@@ -531,12 +531,12 @@ RTC::ReturnCode_t RTCKinect::onRateChanged(RTC::UniqueId ec_id)
 extern "C"
 {
  
-  void RTCKinectInit(RTC::Manager* manager)
+  void KinectInit(RTC::Manager* manager)
   {
-    coil::Properties profile(rtckinect_spec);
+    coil::Properties profile(kinect_spec);
     manager->registerFactory(profile,
-                             RTC::Create<RTCKinect>,
-                             RTC::Delete<RTCKinect>);
+                             RTC::Create<Kinect>,
+                             RTC::Delete<Kinect>);
   }
   
 };

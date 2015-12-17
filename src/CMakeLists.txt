@@ -1,5 +1,5 @@
-set(comp_srcs RTCKinect.cpp )
-set(standalone_srcs RTCKinectComp.cpp)
+set(comp_srcs Kinect.cpp )
+set(standalone_srcs KinectComp.cpp)
 
 if (DEFINED OPENRTM_INCLUDE_DIRS)
   string(REGEX REPLACE "-I" ";"
