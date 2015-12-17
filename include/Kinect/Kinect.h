@@ -236,30 +236,24 @@ class Kinect
    * - Name:  enable_camera
    * - DefaultValue: 1
    */
-  int m_enable_camera;
+  std::string m_enable_camera;
   /*!
    * 
    * - Name:  enable_depth
    * - DefaultValue: 1
    */
-  int m_enable_depth;
+  std::string m_enable_depth;
   /*!
    * 
-   * - Name:  camera_width
-   * - DefaultValue: 640
-   */
-  int m_camera_width;
-  /*!
-   * 
-   * - Name:  camera_height
+   * - Name:  image_size
    * - DefaultValue: 480
    */
-  int m_camera_height;
+  std::string m_image_size;
   /*!
-   * 
-   * - Name:  depth_width
-   * - DefaultValue: 320
-   */
+  *
+  * - Name:  depth_width
+  * - DefaultValue: 320
+  */
   int m_depth_width;
   /*!
    * 

@@ -20,9 +20,9 @@ static const char* kinect_spec[] =
   {
     "implementation_id", "Kinect",
     "type_name",         "Kinect",
-    "description",       "RTC Kinect 4 Windows",
-    "version",           "1.0.0",
-    "vendor",            "ysuga.net",
+    "description",       "RT Component for Kinect for Windows v1",
+    "version",           "2.0.0",
+    "vendor",            "Sugar Sweet Robotics",
     "category",          "HumanInterface",
     "activity_type",     "PERIODIC",
     "kind",              "DataFlowComponent",
@@ -31,10 +31,9 @@ static const char* kinect_spec[] =
     "lang_type",         "compile",
     // Configuration variables
     "conf.default.debug", "0",
-    "conf.default.enable_camera", "1",
-    "conf.default.enable_depth", "1",
-    "conf.default.camera_width", "640",
-    "conf.default.camera_height", "480",
+    "conf.default.enable_camera", "true",
+    "conf.default.enable_depth", "true",
+    "conf.default.image_size", "640x480",
     "conf.default.depth_width", "320",
     "conf.default.depth_height", "240",
     "conf.default.player_index", "0",
@@ -43,13 +42,15 @@ static const char* kinect_spec[] =
     "conf.__widget__.debug", "text",
     "conf.__widget__.enable_camera", "text",
     "conf.__widget__.enable_depth", "text",
-    "conf.__widget__.camera_width", "text",
-    "conf.__widget__.camera_height", "text",
+    "conf.__widget__.image_size", "text",
     "conf.__widget__.depth_width", "text",
     "conf.__widget__.depth_height", "text",
     "conf.__widget__.player_index", "text",
 	"conf.__widget__.kinect_index", "text",
     // Constraints
+	"conf.__constraints__.enable_camera", "(true,false)",
+	"conf.__constraints__.enable_depth", "(true,false)",
+	"conf.__constraints__.image_size", "text",
     ""
   };
 // </rtc-template>
@@ -106,8 +107,7 @@ RTC::ReturnCode_t Kinect::onInitialize()
   bindParameter("debug", m_debug, "0");
   bindParameter("enable_camera", m_enable_camera, "1");
   bindParameter("enable_depth", m_enable_depth, "1");
-  bindParameter("camera_width", m_camera_width, "640");
-  bindParameter("camera_height", m_camera_height, "480");
+  bindParameter("image_size", m_image_size, "640x480");
   bindParameter("depth_width", m_depth_width, "320");
   bindParameter("depth_height", m_depth_height, "240");
   bindParameter("player_index", m_player_index, "0");
@@ -159,10 +159,10 @@ RTC::ReturnCode_t Kinect::onActivated(RTC::UniqueId ec_id)
 	 */
 
 	DWORD dwFlag = NUI_INITIALIZE_FLAG_USES_SKELETON;
-	if(m_enable_camera) {
+	if(m_enable_camera == "true") {
 		dwFlag |= NUI_INITIALIZE_FLAG_USES_COLOR;
 	}
-	if(m_enable_depth) {
+	if(m_enable_depth == "true") {
 		if(m_player_index) {
 			dwFlag |= NUI_INITIALIZE_FLAG_USES_DEPTH_AND_PLAYER_INDEX;
 		} else {
@@ -177,18 +177,24 @@ RTC::ReturnCode_t Kinect::onActivated(RTC::UniqueId ec_id)
 		return RTC::RTC_ERROR;
     }
 
-	if(m_depth_width == 640 && m_depth_height == 480 && m_enable_depth && m_player_index) {
+	if(m_depth_width == 640 && m_depth_height == 480 && (m_enable_depth=="true") && m_player_index) {
 		std::cout << " - If PlayerIndex and Depth Map is ON, resolution should be 320X240" << std::endl;
 		return RTC::RTC_ERROR;
 	}
 	NUI_IMAGE_RESOLUTION eResolution;
-	if(m_camera_width == 640 && m_camera_height == 480) {
+	if(m_image_size == "640x480") {
 		eResolution = NUI_IMAGE_RESOLUTION_640x480;
+
+		this->m_image.width = 640;
+		this->m_image.height = 480;
+		this->m_image.pixels.length(640 * 480 * 3);
+
+
 	} else {
 		std::cout << " - Invalid Image Resolution" << std::endl;
 		return RTC::RTC_ERROR;
 	}
-	if(m_enable_camera) {
+	if(m_enable_camera == "true") {
 		hr = m_pNuiSensor->NuiImageStreamOpen(::NUI_IMAGE_TYPE_COLOR, eResolution, 0, 2, NULL, &m_pVideoStreamHandle );
 		if( FAILED( hr ) )
 		{
@@ -205,7 +211,7 @@ RTC::ReturnCode_t Kinect::onActivated(RTC::UniqueId ec_id)
 		std::cout << " - Invalid Image Resolution" << std::endl;
 		return RTC::RTC_ERROR;
 	}
-	if(m_enable_depth) {
+	if(m_enable_depth == "true") {
 		if(m_player_index) {
 			hr = m_pNuiSensor->NuiImageStreamOpen(::NUI_IMAGE_TYPE_DEPTH_AND_PLAYER_INDEX, eResolution, 0, 2, NULL, &m_pDepthStreamHandle );
 		} else {
@@ -217,11 +223,6 @@ RTC::ReturnCode_t Kinect::onActivated(RTC::UniqueId ec_id)
 		std::cout << " - NUI Image Stream Open Failed." << std::endl;
 		return RTC::RTC_ERROR;
     }
-
-	
-	this->m_image.width = m_camera_width;
-	this->m_image.height = m_camera_height;
-	this->m_image.pixels.length(m_camera_width*m_camera_height*3);
 
 	this->m_depth.bits.length(m_depth_width*m_depth_height);
 	coil::sleep(3);
@@ -270,13 +271,13 @@ HRESULT Kinect::WriteColorImage(void)
     if( LockedRect.Pitch != 0 )
     {
         BYTE * pBuffer = (BYTE*) LockedRect.pBits;
-		for(int h = 0;h < m_camera_height;h++) {
-			for(int w = 0;w < m_camera_width;w++) {
-				BYTE* pixel = pBuffer + (h * m_camera_width * 4) + w * 4;
+		for(int h = 0;h < m_image.height;h++) {
+			for(int w = 0;w < m_image.width;w++) {
+				BYTE* pixel = pBuffer + (h * m_image.width * 4) + w * 4;
 				BYTE b = pixel[0];
 				BYTE g = pixel[1];
 				BYTE r = pixel[2];
-				int offset = h*m_camera_width*3+w*3;
+				int offset = h*m_image.width*3+w*3;
 				m_image.pixels[offset + 0] = b;
 				m_image.pixels[offset + 1] = g;
 				m_image.pixels[offset + 2] = r;
@@ -468,13 +469,13 @@ HRESULT Kinect::WriteSkeleton()
 
 RTC::ReturnCode_t Kinect::onExecute(RTC::UniqueId ec_id)
 {
-	if(m_enable_camera) {
+	if(m_enable_camera == "true") {
 		if( FAILED(WriteColorImage())) {
 			return RTC::RTC_ERROR;
 		}
 	}
 
-	if(m_enable_depth) {
+	if(m_enable_depth == "true") {
 		if( FAILED(WriteDepthImage())) {
 			return RTC::RTC_ERROR;
 		}
