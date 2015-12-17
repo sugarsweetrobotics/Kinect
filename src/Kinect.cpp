@@ -34,23 +34,22 @@ static const char* kinect_spec[] =
     "conf.default.enable_camera", "true",
     "conf.default.enable_depth", "true",
     "conf.default.image_size", "640x480",
-    "conf.default.depth_width", "320",
-    "conf.default.depth_height", "240",
+    "conf.default.depth_size", "320x240",
     "conf.default.player_index", "0",
 	"conf.default.kinect_index", "0",
     // Widget
     "conf.__widget__.debug", "text",
-    "conf.__widget__.enable_camera", "text",
-    "conf.__widget__.enable_depth", "text",
-    "conf.__widget__.image_size", "text",
-    "conf.__widget__.depth_width", "text",
-    "conf.__widget__.depth_height", "text",
+    "conf.__widget__.enable_camera", "radio",
+    "conf.__widget__.enable_depth", "radio",
+    "conf.__widget__.image_size", "radio",
+    "conf.__widget__.depth_size", "radio",
     "conf.__widget__.player_index", "text",
 	"conf.__widget__.kinect_index", "text",
     // Constraints
 	"conf.__constraints__.enable_camera", "(true,false)",
 	"conf.__constraints__.enable_depth", "(true,false)",
-	"conf.__constraints__.image_size", "text",
+	"conf.__constraints__.image_size", "(80x60,320x240,640x480,1280x960)",
+	"conf.__constraints__.depth_size", "(320x240,640x480)",
     ""
   };
 // </rtc-template>
@@ -105,11 +104,10 @@ RTC::ReturnCode_t Kinect::onInitialize()
   // <rtc-template block="bind_config">
   // Bind variables and configuration variable
   bindParameter("debug", m_debug, "0");
-  bindParameter("enable_camera", m_enable_camera, "1");
-  bindParameter("enable_depth", m_enable_depth, "1");
+  bindParameter("enable_camera", m_enable_camera, "true");
+  bindParameter("enable_depth", m_enable_depth, "true");
   bindParameter("image_size", m_image_size, "640x480");
-  bindParameter("depth_width", m_depth_width, "320");
-  bindParameter("depth_height", m_depth_height, "240");
+  bindParameter("depth_size", m_depth_size, "320x240");
   bindParameter("player_index", m_player_index, "0");
   bindParameter("kinect_index", m_kinect_index, "0");
   // </rtc-template>
@@ -177,20 +175,38 @@ RTC::ReturnCode_t Kinect::onActivated(RTC::UniqueId ec_id)
 		return RTC::RTC_ERROR;
     }
 
-	if(m_depth_width == 640 && m_depth_height == 480 && (m_enable_depth=="true") && m_player_index) {
+	if((m_depth_size == "640x480") && (m_enable_depth=="true") && m_player_index) {
 		std::cout << " - If PlayerIndex and Depth Map is ON, resolution should be 320X240" << std::endl;
 		return RTC::RTC_ERROR;
 	}
 	NUI_IMAGE_RESOLUTION eResolution;
-	if(m_image_size == "640x480") {
+	if(m_image_size == "80x60") {
+		eResolution = NUI_IMAGE_RESOLUTION_80x60;
+		this->m_image.width = 80;
+		this->m_image.height = 60;
+		this->m_image.pixels.length(m_image.width * m_image.height * 3);
+	}
+	else 	if (m_image_size == "320x240") {
 		eResolution = NUI_IMAGE_RESOLUTION_640x480;
-
+		this->m_image.width = 320;
+		this->m_image.height = 240;
+		this->m_image.pixels.length(m_image.width * m_image.height * 3);
+	}
+	else 	if (m_image_size == "640x480") {
+		eResolution = NUI_IMAGE_RESOLUTION_640x480;
 		this->m_image.width = 640;
 		this->m_image.height = 480;
-		this->m_image.pixels.length(640 * 480 * 3);
+		this->m_image.pixels.length(m_image.width * m_image.height * 3);
+	}
+	else 	if (m_image_size == "1280x960") {
+		eResolution = NUI_IMAGE_RESOLUTION_640x480;
+		this->m_image.width = 1280;
+		this->m_image.height = 900;
+		this->m_image.pixels.length(m_image.width * m_image.height * 3);
+	}
 
-
-	} else {
+	
+	else {
 		std::cout << " - Invalid Image Resolution" << std::endl;
 		return RTC::RTC_ERROR;
 	}
@@ -203,11 +219,17 @@ RTC::ReturnCode_t Kinect::onActivated(RTC::UniqueId ec_id)
 		}
 	}
 
-	if(m_depth_width == 640 && m_depth_height == 480) {
+	if(m_depth_size == "640x480") {
 		eResolution = NUI_IMAGE_RESOLUTION_640x480;
-	} else if(m_depth_width == 320 && m_depth_height == 240) {
+		m_depth_width = 640; m_depth_height = 480;
+		this->m_depth.bits.length(m_depth_width*m_depth_height);
+	}
+	else if (m_depth_size == "320x240") {
 		eResolution = NUI_IMAGE_RESOLUTION_320x240;
-	} else {
+		m_depth_width = 320; m_depth_height = 240;
+		this->m_depth.bits.length(m_depth_width*m_depth_height);
+	}
+	else {
 		std::cout << " - Invalid Image Resolution" << std::endl;
 		return RTC::RTC_ERROR;
 	}
@@ -224,7 +246,6 @@ RTC::ReturnCode_t Kinect::onActivated(RTC::UniqueId ec_id)
 		return RTC::RTC_ERROR;
     }
 
-	this->m_depth.bits.length(m_depth_width*m_depth_height);
 	coil::sleep(3);
 
 	return RTC::RTC_OK;

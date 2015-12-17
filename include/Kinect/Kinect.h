@@ -254,13 +254,7 @@ class Kinect
   * - Name:  depth_width
   * - DefaultValue: 320
   */
-  int m_depth_width;
-  /*!
-   * 
-   * - Name:  depth_height
-   * - DefaultValue: 240
-   */
-  int m_depth_height;
+  std::string m_depth_size;
   /*!
    * 
    * - Name:  player_index
@@ -343,6 +337,8 @@ class Kinect
 	HRESULT WriteSkeleton();
 
 	INuiSensor *    m_pNuiSensor;
+
+	int m_depth_width, m_depth_height;
 
 };
 
