@@ -27,6 +27,7 @@
 // Service Consumer stub headers
 // <rtc-template block="consumer_stub_h">
 #include "KinectDataTypeStub.h"
+#include "ImgStub.h"
 
 // </rtc-template>
 
@@ -281,12 +282,22 @@ class Kinect
 
   // DataOutPort declaration
   // <rtc-template block="outport_declare">
+#ifdef OLD_IMAGE
   RTC::CameraImage m_image;
   /*!
    * Camera Color Image
    * - Type: CameraImage
    */
   OutPort<RTC::CameraImage> m_imageOut;
+#else
+  Img::TimedCameraImage m_image;
+  /*!
+  * Camera Color Image
+  * - Type: TimedCameraImage
+  */
+  OutPort<Img::TimedCameraImage> m_imageOut;
+#endif
+
   KINECT::DepthImage m_depth;
   /*!
    * Depth Image
@@ -339,6 +350,7 @@ class Kinect
 	INuiSensor *    m_pNuiSensor;
 
 	int m_depth_width, m_depth_height;
+	int m_image_width, m_image_height;
 
 };
 

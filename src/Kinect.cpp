@@ -139,6 +139,7 @@ RTC::ReturnCode_t Kinect::onShutdown(RTC::UniqueId ec_id)
 
 RTC::ReturnCode_t Kinect::onActivated(RTC::UniqueId ec_id)
 {
+	m_pNuiSensor = NULL;
 
 	HRESULT hr = NuiCreateSensorByIndex(m_kinect_index, &m_pNuiSensor);
 	if ( FAILED(hr) ) {
@@ -182,34 +183,37 @@ RTC::ReturnCode_t Kinect::onActivated(RTC::UniqueId ec_id)
 	NUI_IMAGE_RESOLUTION eResolution;
 	if(m_image_size == "80x60") {
 		eResolution = NUI_IMAGE_RESOLUTION_80x60;
-		this->m_image.width = 80;
-		this->m_image.height = 60;
-		this->m_image.pixels.length(m_image.width * m_image.height * 3);
+		this->m_image_width = 80;
+		this->m_image_height = 60;
 	}
 	else 	if (m_image_size == "320x240") {
 		eResolution = NUI_IMAGE_RESOLUTION_640x480;
-		this->m_image.width = 320;
-		this->m_image.height = 240;
-		this->m_image.pixels.length(m_image.width * m_image.height * 3);
+		this->m_image_width = 320;
+		this->m_image_height = 240;
 	}
 	else 	if (m_image_size == "640x480") {
 		eResolution = NUI_IMAGE_RESOLUTION_640x480;
-		this->m_image.width = 640;
-		this->m_image.height = 480;
-		this->m_image.pixels.length(m_image.width * m_image.height * 3);
+		this->m_image_width = 640;
+		this->m_image_height = 480;
 	}
 	else 	if (m_image_size == "1280x960") {
 		eResolution = NUI_IMAGE_RESOLUTION_640x480;
-		this->m_image.width = 1280;
-		this->m_image.height = 900;
-		this->m_image.pixels.length(m_image.width * m_image.height * 3);
+		this->m_image_width = 1280;
+		this->m_image_height = 900;
 	}
-
-	
 	else {
 		std::cout << " - Invalid Image Resolution" << std::endl;
 		return RTC::RTC_ERROR;
 	}
+#if OLD_IMAGE
+	this->m_image.pixels.length(m_image_width * m_image_height * 3);
+#else
+	this->m_image.data.image.format = Img::CF_RGB;
+	this->m_image.data.image.width = m_image_width;
+	this->m_image.data.image.height = m_image_height;
+	this->m_image.data.image.raw_data.length(m_image_width*m_image_height * 3);
+#endif
+
 	if(m_enable_camera == "true") {
 		hr = m_pNuiSensor->NuiImageStreamOpen(::NUI_IMAGE_TYPE_COLOR, eResolution, 0, 2, NULL, &m_pVideoStreamHandle );
 		if( FAILED( hr ) )
@@ -254,8 +258,9 @@ RTC::ReturnCode_t Kinect::onActivated(RTC::UniqueId ec_id)
 
 RTC::ReturnCode_t Kinect::onDeactivated(RTC::UniqueId ec_id)
 {
-	m_pNuiSensor->NuiShutdown( );
-
+	if (m_pNuiSensor) {
+		m_pNuiSensor->NuiShutdown();
+	}
 	return RTC::RTC_OK;
 }
 
@@ -273,7 +278,7 @@ RTC::ReturnCode_t Kinect::onDeactivated(RTC::UniqueId ec_id)
  * RTC::CameraImage struct  -> BGR (3 bytes)
  *
  */
-
+#ifdef OLD_IMAGE
 HRESULT Kinect::WriteColorImage(void)
 {
 	static const long TIMEOUT_IN_MILLI = 100;
@@ -316,6 +321,52 @@ HRESULT Kinect::WriteColorImage(void)
 
 	return S_OK;
 }
+#else
+HRESULT Kinect::WriteColorImage(void)
+{
+	static const long TIMEOUT_IN_MILLI = 100;
+	NUI_IMAGE_FRAME ImageFrame;
+	HRESULT hr = m_pNuiSensor->NuiImageStreamGetNextFrame(m_pVideoStreamHandle, TIMEOUT_IN_MILLI, &ImageFrame);
+	if (FAILED(hr)) {
+		std::cout << "NuiImageStreamGetNextFrame failed." << std::endl;
+		return hr;
+	}
+
+	//NuiImageBuffer * pTexture = pImageFrame->pFrameTexture;
+	//KINECT_LOCKED_RECT LockedRect;
+	INuiFrameTexture * pTexture = ImageFrame.pFrameTexture;
+	NUI_LOCKED_RECT LockedRect;
+	pTexture->LockRect(0, &LockedRect, NULL, 0);
+	if (LockedRect.Pitch != 0)
+	{
+		BYTE * pBuffer = (BYTE*)LockedRect.pBits;
+		for (int h = 0; h < m_image_height; h++) {
+			for (int w = 0; w < m_image_width; w++) {
+				BYTE* pixel = pBuffer + (h * m_image_width * 4) + w * 4;
+				BYTE b = pixel[0];
+				BYTE g = pixel[1];
+				BYTE r = pixel[2];
+				int offset = h*m_image_width * 3 + w * 3;
+				m_image.data.image.raw_data[offset + 0] = r;
+				m_image.data.image.raw_data[offset + 1] = g;
+				m_image.data.image.raw_data[offset + 2] = b;
+			}
+			m_imageOut.write();
+		}
+
+	}
+	else {
+		std::cout << "Buffer length of received texture is bogus\r\n" << std::endl;
+	}
+	pTexture->UnlockRect(0);
+
+	m_pNuiSensor->NuiImageStreamReleaseFrame(m_pVideoStreamHandle, &ImageFrame);
+
+	return S_OK;
+}
+
+
+#endif
 
 /**
  * Writing Depth Image to the Outport

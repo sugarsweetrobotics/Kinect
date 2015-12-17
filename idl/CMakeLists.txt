@@ -1,4 +1,4 @@
-set(idls ${CMAKE_CURRENT_SOURCE_DIR}/KinectDataType.idl )
+set(idls ${CMAKE_CURRENT_SOURCE_DIR}/KinectDataType.idl ${CMAKE_CURRENT_SOURCE_DIR}/Img.idl)
 
 install(FILES ${idls} DESTINATION ${INC_INSTALL_DIR}/idl
     COMPONENT idl)
